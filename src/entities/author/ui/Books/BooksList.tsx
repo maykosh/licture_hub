@@ -66,8 +66,7 @@ export const BooksList: React.FC = () => {
       fetchBooks();
    }, [userId]);
 
-   const handleEdit = (id: number) => {
-      "Edit book:", id;
+   const handleEdit = () => {
    };
 
    const handleDelete = (id: number) => {
