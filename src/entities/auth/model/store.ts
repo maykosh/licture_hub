@@ -36,7 +36,6 @@ export const useAuthStore = create<AuthState>((set) => ({
    checkSession: async () => {
       try {
          const { data, error } = await supabase.auth.getSession();
-         console.log("Session data:", data);
 
          if (error) {
             console.error("Session error:", error);
@@ -45,7 +44,6 @@ export const useAuthStore = create<AuthState>((set) => ({
          }
 
          if (!data.session?.user) {
-            console.log("No active session");
             set({ user: null, isAuthChecked: true });
             return;
          }
@@ -90,7 +88,6 @@ export const useAuthStore = create<AuthState>((set) => ({
             email: user.email,
          };
 
-         console.log("Setting auth user:", authUser);
          set({ user: authUser, isAuthChecked: true });
       } catch (error) {
          console.error("Unexpected error in checkSession:", error);

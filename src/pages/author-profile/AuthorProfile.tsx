@@ -44,7 +44,6 @@ export const AuthorProfile = React.memo(() => {
          mounted = false;
       };
    }, [uid]);
-   console.log("render");
    if (!uid) return null;
 
    if (loading) {

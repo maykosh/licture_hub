@@ -67,7 +67,7 @@ export const BooksList: React.FC = () => {
    }, [userId]);
 
    const handleEdit = (id: number) => {
-      console.log("Edit book:", id);
+      "Edit book:", id;
    };
 
    const handleDelete = (id: number) => {

@@ -39,7 +39,7 @@ export const Register = () => {
          // Вызов checkSession чтобы получить полные данные
          await useAuthStore.getState().checkSession();
 
-         message.success("Вы успешно зарегистрировались!");
+         message.success("Пожалуйста, проверьте ваш email для подтверждения");
          navigate("/");
          // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {

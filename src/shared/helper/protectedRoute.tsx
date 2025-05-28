@@ -13,7 +13,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
    requiredRole,
 }) => {
    const user = useAuthStore((state) => state.user);
-   console.log(user);
    if (!user) {
       return <Navigate to="/login" replace />;
    }

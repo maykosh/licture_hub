@@ -33,7 +33,6 @@ export const AuthorLayout: React.FC = () => {
          </div>
       );
    }
-   console.log(isAuthChecked, user);
    
    return (
       <div className="flex h-[100vh] ">

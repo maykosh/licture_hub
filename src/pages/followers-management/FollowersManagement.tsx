@@ -83,7 +83,6 @@ export const FollowersManagement = () => {
 
          if (followersError) throw followersError;
 
-         console.log("Полученные данные о подписчиках:", followersData);
 
          // Получаем информацию о ролях
          const { data: rolesData } = await supabase
@@ -107,10 +106,6 @@ export const FollowersManagement = () => {
                   },
                })) || [];
 
-         console.log(
-            "Отформатированные данные о подписчиках:",
-            formattedFollowers
-         );
          setFollowers(formattedFollowers);
       } catch (error) {
          console.error("Ошибка при загрузке подписчиков:", error);
