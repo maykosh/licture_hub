@@ -1,0 +1,267 @@
+.container {
+   min-height: 100vh;
+   padding: 40px 20px;
+   background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+}
+
+.card {
+   max-width: 800px;
+   margin: 0 auto;
+   border-radius: 16px;
+   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+   text-align: center;
+   margin-bottom: 40px !important;
+   background: linear-gradient(45deg, #1677ff, #69b1ff);
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+}
+
+.form {
+   max-width: 600px;
+   margin: 0 auto;
+}
+
+.typeSelector {
+   margin-bottom: 32px;
+}
+
+.select {
+   width: 100%;
+   height: 48px;
+}
+
+.input,
+.textarea {
+   border-radius: 8px;
+   transition: all 0.3s ease;
+}
+
+.input:hover,
+.textarea:hover {
+   border-color: #1677ff;
+}
+
+.uploadSection {
+   margin-bottom: 32px;
+}
+
+.uploadArea {
+   width: 100%;
+   min-height: 200px;
+   border: 2px dashed #d9d9d9;
+   border-radius: 12px;
+   transition: all 0.3s ease;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #fafafa;
+}
+
+.uploadArea:hover {
+   border-color: #1677ff;
+   background: #f0f5ff;
+}
+
+.placeholder {
+   text-align: center;
+   padding: 24px;
+}
+
+.uploadIcon {
+   font-size: 48px;
+   color: #bfbfbf;
+   margin-bottom: 16px;
+   display: block;
+}
+
+.hint {
+   display: block;
+   margin-top: 8px;
+}
+
+.previewContainer {
+   position: relative;
+   width: 100%;
+   height: 200px;
+}
+
+.preview {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   border-radius: 12px;
+}
+
+.overlay {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   background: rgba(0, 0, 0, 0.5);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   opacity: 0;
+   transition: opacity 0.3s ease;
+   border-radius: 12px;
+}
+
+.previewContainer:hover .overlay {
+   opacity: 1;
+}
+
+.fileUploaded {
+   text-align: center;
+   padding: 24px;
+}
+
+.fileIcon {
+   font-size: 48px;
+   color: #52c41a;
+   margin-bottom: 16px;
+   display: block;
+}
+
+.replaceButton {
+   margin-top: 16px;
+}
+
+.priceSection {
+   display: flex;
+   align-items: center;
+   gap: 16px;
+   margin-bottom: 32px;
+}
+
+.switchContainer {
+   margin-bottom: 0;
+}
+
+.priceIcon {
+   font-size: 20px;
+   color: #faad14;
+}
+
+.priceInput {
+   flex: 1;
+   margin-bottom: 0;
+}
+
+.submitSection {
+   margin-top: 40px;
+   text-align: center;
+}
+
+.submitButton {
+   min-width: 200px;
+   height: 48px;
+   font-size: 16px;
+   border-radius: 24px;
+   background: linear-gradient(45deg, #1677ff, #69b1ff);
+   border: none;
+   transition: all 0.3s ease;
+}
+
+.submitButton:hover {
+   transform: translateY(-2px);
+   box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+}
+
+@media (max-width: 576px) {
+   .container {
+      padding: 20px 16px;
+   }
+
+   .card {
+      border-radius: 12px;
+   }
+
+   .form {
+      padding: 0;
+   }
+
+   .priceSection {
+      flex-direction: column;
+      gap: 24px;
+   }
+
+   .priceInput {
+      width: 100%;
+   }
+}
+
+.loadingContainer {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   width: 100%;
+   height: 200px;
+   background-color: #f5f5f5;
+   border-radius: 8px;
+   border: 2px dashed #d9d9d9;
+}
+
+.previewContainer {
+   position: relative;
+   width: 100%;
+   height: 200px;
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.preview {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+}
+
+.overlay {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: rgba(0, 0, 0, 0.5);
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   opacity: 0;
+   transition: opacity 0.3s;
+}
+
+.previewContainer:hover .overlay {
+   opacity: 1;
+}
+
+.placeholder {
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   width: 100%;
+   height: 200px;
+   background-color: #f5f5f5;
+   border-radius: 8px;
+   border: 2px dashed #d9d9d9;
+   cursor: pointer;
+   transition: border-color 0.3s;
+}
+
+.placeholder:hover {
+   border-color: #1890ff;
+}
+
+.uploadIcon {
+   font-size: 32px;
+   color: #999;
+   margin-bottom: 8px;
+}
+
+.hint {
+   margin-top: 8px;
+}
