@@ -8,7 +8,7 @@ import { Outlet, useParams } from "react-router-dom";
 export const AuthorLayout: React.FC = () => {
    const collapsed = useToggleCollapsedStore((state) => state.collapsed);
    const setCollapsed = useToggleCollapsedStore((state) => state.setCollapsed);
-   const { logout, isAuthChecked, user } = useAuthStore();
+   const { logout, isAuthChecked } = useAuthStore();
    const path = useParams();
 
    const [scrolled, setScrolled] = React.useState(false);
