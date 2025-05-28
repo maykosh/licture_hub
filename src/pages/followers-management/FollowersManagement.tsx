@@ -176,9 +176,9 @@ export const FollowersManagement = () => {
                   >
                      {record.user.full_name}
                   </Text>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
+                  {/* <Text type="secondary" style={{ fontSize: "12px" }}>
                      {record.user.email}
-                  </Text>
+                  </Text> */}
                </Space>
             </Space>
          ),
