@@ -34,13 +34,6 @@ const MediaListComponent: React.FC<MediaListProps> = ({
    const [loading, setLoading] = useState(true);
    const userId = useAuthStore((state) => state.user?.uid);
 
-   // console.log(
-   //    "MediaList render, searchQuery:",
-   //    searchQuery,
-   //    "authorId:",
-   //    authorId
-   // );
-
    useEffect(() => {
       const fetchMedia = async () => {
          try {
@@ -73,9 +66,6 @@ const MediaListComponent: React.FC<MediaListProps> = ({
             const { data, error } = await query;
 
             if (error) throw error;
-
-            "Полученные данные:", data;
-
             setMediaItems(
                data?.map((item) => ({
                   ...item,

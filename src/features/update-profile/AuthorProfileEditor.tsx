@@ -22,6 +22,19 @@ interface IProps {
    initialData: IAuthorProfile;
 }
 
+interface FormValues {
+   name: string;
+   bio?: string;
+   achievements?: string[];
+   avatar: {
+      uid: string;
+      name: string;
+      status: string;
+      url?: string;
+      originFileObj?: File;
+   }[];
+}
+
 export const AuthorProfileEditor: React.FC<IProps> = ({
    open,
    onClose,
@@ -51,7 +64,7 @@ export const AuthorProfileEditor: React.FC<IProps> = ({
       }
    }, [open, initialData, form]);
 
-   const handleFinish = async (values: any) => {
+   const handleFinish = async (values: FormValues) => {
       setLoading(true);
       try {
          let avatarUrl = initialData.avatar_url;

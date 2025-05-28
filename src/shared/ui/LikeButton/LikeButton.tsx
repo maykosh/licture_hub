@@ -77,7 +77,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 }) => {
    const [isLiked, setIsLiked] = useState(false);
    const [likesCount, setLikesCount] = useState(initialLikesCount);
-   const [loading, setLoading] = useState(false);
+   // const [loading, setLoading] = useState(false);
 
    // Обновляем локальное состояние при изменении initialLikesCount
    useEffect(() => {
@@ -93,7 +93,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
          }
 
          try {
-            setLoading(true);
+            // setLoading(true);
             const idField = `${contentType}_id`;
 
             // Получаем актуальное количество лайков
@@ -125,7 +125,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
             console.error("Ошибка при проверке лайка:", error);
             message.error("Не удалось загрузить информацию о лайках");
          } finally {
-            setLoading(false);
+            // setLoading(false);
          }
       };
 
@@ -138,7 +138,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
          return;
       }
 
-      setLoading(true);
+      // setLoading(true);
       try {
          const idField = `${contentType}_id`;
 
@@ -196,7 +196,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
          checkLikes();
       } finally {
-         setLoading(false);
+         // setLoading(false);
       }
    };
 
