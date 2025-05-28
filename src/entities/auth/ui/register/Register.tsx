@@ -55,6 +55,10 @@ export const Register = () => {
             display: "flex",
             minHeight: "100vh",
             background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            overflow: "hidden",
+            position: "fixed",
+            width: "100%",
+            height: "100%",
          }}
       >
          <motion.div
@@ -85,6 +89,7 @@ export const Register = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: 40,
+                  overflow: "auto",
                }}
             >
                <motion.div
@@ -126,6 +131,7 @@ export const Register = () => {
                alignItems: "center",
                justifyContent: "center",
                padding: 40,
+               overflow: "auto",
             }}
          >
             <div style={{ maxWidth: 400, width: "100%" }}>

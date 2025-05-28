@@ -55,6 +55,10 @@ export const Login = () => {
             display: "flex",
             minHeight: "100vh",
             background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            overflow: "hidden",
+            position: "fixed",
+            width: "100%",
+            height: "100%",
          }}
       >
          <motion.div
@@ -63,7 +67,8 @@ export const Login = () => {
             transition={{ duration: 0.5 }}
             style={{
                flex: 1,
-               backgroundImage: "url('https://cdn1.img.sputniknews.uz/img/07e8/07/11/44832225_0:0:1024:577_1920x0_80_0_0_117a3df8b82b2267d60c2f9a14b568c1.jpg')",
+               backgroundImage:
+                  "url('https://cdn1.img.sputniknews.uz/img/07e8/07/11/44832225_0:0:1024:577_1920x0_80_0_0_117a3df8b82b2267d60c2f9a14b568c1.jpg')",
                backgroundSize: "cover",
                backgroundPosition: "center",
                position: "relative",
@@ -84,6 +89,7 @@ export const Login = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: 40,
+                  overflow: "auto",
                }}
             >
                <motion.div
@@ -125,6 +131,7 @@ export const Login = () => {
                alignItems: "center",
                justifyContent: "center",
                padding: 40,
+               overflow: "auto",
             }}
          >
             <div style={{ maxWidth: 400, width: "100%" }}>
