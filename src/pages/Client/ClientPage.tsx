@@ -1,9 +1,5 @@
-import React from 'react'
+import React from "react";
 
 export const ClientPage: React.FC = () => {
- 
-  return (
-    <div>ClientPage</div>
-  )
-}
-
+   return <div>ClientPage</div>;
+};

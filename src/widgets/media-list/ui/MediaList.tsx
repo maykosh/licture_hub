@@ -24,11 +24,13 @@ interface Media {
 interface MediaListProps {
    searchQuery: string;
    authorId?: string;
+   filter?: "all" | "popular" | "new" | "trending";
 }
 
 const MediaListComponent: React.FC<MediaListProps> = ({
    searchQuery,
    authorId,
+   filter = "all",
 }) => {
    const [mediaItems, setMediaItems] = useState<Media[]>([]);
    const [loading, setLoading] = useState(true);
@@ -66,13 +68,45 @@ const MediaListComponent: React.FC<MediaListProps> = ({
             const { data, error } = await query;
 
             if (error) throw error;
-            setMediaItems(
+
+            let processedMedia =
                data?.map((item) => ({
                   ...item,
                   author_name: item.authors?.author_name,
-                  likes_count: item.likes?.count || 0,
-               })) || []
-            );
+                  likes_count: item.likes[0]?.count || 0,
+               })) || [];
+
+            // Применяем фильтрацию
+            switch (filter) {
+               case "popular":
+                  processedMedia.sort((a, b) => b.likes_count - a.likes_count);
+                  processedMedia = processedMedia.slice(0, 10); // Топ 10 популярных
+                  break;
+               case "new":
+                  processedMedia.sort(
+                     (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                  );
+                  break;
+               case "trending": // Для трендовых видео можно использовать комбинацию лайков и времени
+               {
+                  const now = new Date().getTime();
+                  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000; // 7 дней назад
+                  processedMedia = processedMedia
+                     .filter(
+                        (item) =>
+                           new Date(item.created_at).getTime() > oneWeekAgo
+                     )
+                     .sort((a, b) => b.likes_count - a.likes_count);
+                  break;
+               }
+               default:
+                  // Для 'all' не применяем дополнительную фильтрацию
+                  break;
+            }
+
+            setMediaItems(processedMedia);
          } catch (error) {
             console.error("Ошибка при загрузке видео:", error);
          } finally {
@@ -81,7 +115,7 @@ const MediaListComponent: React.FC<MediaListProps> = ({
       };
 
       fetchMedia();
-   }, [searchQuery, authorId]);
+   }, [searchQuery, authorId, filter]);
 
    const getYouTubeEmbedUrl = (url: string) => {
       try {
@@ -227,6 +261,5 @@ const MediaListComponent: React.FC<MediaListProps> = ({
 
    return renderedList;
 };
-
 export const MediaList = React.memo(MediaListComponent);
 MediaList.displayName = "MediaList";

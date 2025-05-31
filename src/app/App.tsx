@@ -6,12 +6,12 @@ import { Login, Register, useAuthStore } from "@/entities/auth";
 import { AuthorLayout } from "@/widgets";
 import {
    AuthorProfile,
+   ClientPage,
    CreatePost,
    FollowersManagement,
    FormAddMedia,
    OtherAuthors,
 } from "@/pages";
-import { Client } from "@/shared";
 import { AuthorView } from "@/pages/author-view";
 
 export const App = () => {
@@ -76,7 +76,7 @@ export const App = () => {
          <Route
             path="/reader"
             element={
-               user?.role === "reader" ? <Client /> : <Navigate to="/login" />
+               user?.role === "reader" ? <ClientPage /> : <Navigate to="/login" />
             }
          />
 

@@ -22,11 +22,13 @@ interface Post {
 interface PostsListProps {
    searchQuery: string;
    authorId?: string;
+   filter?: "all" | "popular" | "new" | "mostLiked";
 }
 
 export const PostsList: React.FC<PostsListProps> = ({
    searchQuery,
    authorId,
+   filter = "all",
 }) => {
    const [posts, setPosts] = useState<Post[]>([]);
    const [loading, setLoading] = useState(true);
@@ -58,13 +60,39 @@ export const PostsList: React.FC<PostsListProps> = ({
             const { data, error } = await query;
 
             if (error) throw error;
-            setPosts(
+
+            let processedPosts =
                data?.map((post) => ({
                   ...post,
                   author_name: post.authors?.author_name,
                   likes_count: post.likes?.length || 0,
-               })) || []
-            );
+               })) || [];
+
+            // Применяем фильтрацию
+            switch (filter) {
+               case "popular":
+                  processedPosts.sort((a, b) => b.likes_count - a.likes_count);
+                  processedPosts = processedPosts.slice(0, 10); // Топ 10 популярных
+                  break;
+               case "new":
+                  processedPosts.sort(
+                     (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                  );
+                  break;
+               case "mostLiked":
+                  // Фильтруем посты с наибольшим количеством лайков
+                  processedPosts = processedPosts
+                     .filter((post) => post.likes_count > 0)
+                     .sort((a, b) => b.likes_count - a.likes_count);
+                  break;
+               default:
+                  // Для 'all' не применяем дополнительную фильтрацию
+                  break;
+            }
+
+            setPosts(processedPosts);
          } catch (error) {
             console.error("Ошибка при загрузке постов:", error);
          } finally {
@@ -73,7 +101,7 @@ export const PostsList: React.FC<PostsListProps> = ({
       };
 
       fetchPosts();
-   }, [searchQuery, authorId]);
+   }, [searchQuery, authorId, filter]);
 
    const handlePostClick = (post: Post) => {
       setSelectedPost(post);

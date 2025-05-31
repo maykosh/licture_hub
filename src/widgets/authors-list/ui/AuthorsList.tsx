@@ -15,10 +15,12 @@ interface Author {
    avatar_url: string;
    bio: string;
    followersCount: number;
+   created_at: string;
 }
 
 interface AuthorsListProps {
    searchQuery: string;
+   filter?: "all" | "popular" | "new" | "featured";
 }
 
 const getFollowersText = (count: number): string => {
@@ -40,7 +42,10 @@ const getFollowersText = (count: number): string => {
    return "подписчиков";
 };
 
-export const AuthorsList: React.FC<AuthorsListProps> = ({ searchQuery }) => {
+export const AuthorsList: React.FC<AuthorsListProps> = ({
+   searchQuery,
+   filter = "all",
+}) => {
    const [authors, setAuthors] = useState<Author[]>([]);
    const [loading, setLoading] = useState(true);
    const [followingMap, setFollowingMap] = useState<Record<string, boolean>>(
@@ -78,12 +83,41 @@ export const AuthorsList: React.FC<AuthorsListProps> = ({ searchQuery }) => {
                })
             );
 
-            setAuthors(authorsWithFollowers);
+            // Применяем фильтрацию
+            let filteredAuthors = [...authorsWithFollowers];
+
+            switch (filter) {
+               case "popular":
+                  filteredAuthors.sort(
+                     (a, b) => (b.followersCount || 0) - (a.followersCount || 0)
+                  );
+                  filteredAuthors = filteredAuthors.slice(0, 10); // Топ 10 популярных
+                  break;
+               case "new":
+                  filteredAuthors.sort(
+                     (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                  );
+                  break;
+               case "featured":
+                  // Здесь можно добавить логику для отображения рекомендуемых авторов
+                  // Например, авторы с высоким рейтингом или специальным статусом
+                  filteredAuthors = filteredAuthors.filter(
+                     (author) => author.followersCount >= 100
+                  );
+                  break;
+               default:
+                  // Для 'all' не применяем дополнительную фильтрацию
+                  break;
+            }
+
+            setAuthors(filteredAuthors);
 
             // Если есть текущий пользователь, проверяем подписки
             if (currentUser) {
                const followingStatus: Record<string, boolean> = {};
-               for (const author of authorsWithFollowers) {
+               for (const author of filteredAuthors) {
                   if (author.id !== currentUser.uid) {
                      const isFollowing = await followService.isFollowing(
                         currentUser.uid,
@@ -102,7 +136,7 @@ export const AuthorsList: React.FC<AuthorsListProps> = ({ searchQuery }) => {
       };
 
       fetchAuthors();
-   }, [searchQuery, currentUser]);
+   }, [searchQuery, filter, currentUser]);
 
    const handleAuthorClick = (authorId: string) => {
       navigate(`/author/${authorId}`);

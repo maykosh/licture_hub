@@ -131,7 +131,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
       checkIfLiked();
    }, [userId, contentId, contentType, initialLikesCount, onLikeChange]);
-
+  
    const handleLike = async () => {
       if (!userId) {
          message.warning("Необходимо авторизоваться для оценки контента");

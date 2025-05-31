@@ -22,7 +22,6 @@ export const BooksList: React.FC = () => {
    const [loading, setLoading] = useState(true);
    const userId = useAuthStore((state) => state.user?.uid);
    const { author, setAuthorProfile } = useAuthorProfileStore();
-
    const fetchBooks = async () => {
       if (!userId) {
          setLoading(false);

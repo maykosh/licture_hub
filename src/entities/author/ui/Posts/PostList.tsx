@@ -2,7 +2,7 @@ import React from "react";
 import { PostCard } from "./PostCard";
 import { IPosts } from "../../model/type";
 import { Empty } from "antd";
-import { useAuthStore } from "@/entities/auth/model/store";
+import { useAuthStore } from "@/entities/auth";
 
 interface IProps {
    posts: IPosts[];
@@ -17,7 +17,11 @@ export const PostList: React.FC<IProps> = ({
    handleDelete,
    likeCounts,
 }) => {
-   const userId = useAuthStore((state) => state.user?.uid);
+   const { user, isAuthChecked } = useAuthStore();
+
+   if (!isAuthChecked) {
+      return null;
+   }
    
    if (posts.length === 0)
       return <Empty description="Нет опубликованных постов" />;
@@ -30,7 +34,7 @@ export const PostList: React.FC<IProps> = ({
                onEdit={handleEdit}
                onDelete={handleDelete}
                likeCount={likeCounts[post.id] || 0}
-               userId={userId as string}
+               userId={user?.uid as string}
             />
          ))}
       </div>

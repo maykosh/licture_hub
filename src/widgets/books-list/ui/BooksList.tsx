@@ -40,11 +40,13 @@ interface Book {
 interface BooksListProps {
    searchQuery: string;
    authorId?: string;
+   filter?: "all" | "popular" | "new" | "topRated";
 }
 
 export const BooksList: React.FC<BooksListProps> = ({
    searchQuery,
    authorId,
+   filter = "all",
 }) => {
    const [books, setBooks] = useState<Book[]>([]);
    const [loading, setLoading] = useState(true);
@@ -79,14 +81,40 @@ export const BooksList: React.FC<BooksListProps> = ({
 
             if (error) throw error;
 
-
-            setBooks(
+            let processedBooks =
                data?.map((book) => ({
                   ...book,
                   author_name: book.authors?.author_name,
-                  likes_count: book.likes?.count || 0,
-               })) || []
-            );
+                  likes_count: book.likes[0]?.count || 0,
+               })) || [];
+
+            // Применяем фильтрацию
+            switch (filter) {
+               case "popular":
+                  processedBooks.sort((a, b) => b.likes_count - a.likes_count);
+                  processedBooks = processedBooks.slice(0, 10); // Топ 10 популярных
+                  break;
+               case "new":
+                  processedBooks.sort(
+                     (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                  );
+                  break;
+               case "topRated":
+                  // Здесь можно добавить логику для фильтрации по рейтингу
+                  // Например, если у вас есть поле rating в базе данных
+                  console.log(processedBooks);
+                  processedBooks = processedBooks.filter(
+                     (book) => book.likes_count >= 10
+                  );
+                  break;
+               default:
+                  // Для 'all' не применяем дополнительную фильтрацию
+                  break;
+            }
+
+            setBooks(processedBooks);
          } catch (error) {
             console.error("Ошибка при загрузке книг:", error);
          } finally {
@@ -95,7 +123,7 @@ export const BooksList: React.FC<BooksListProps> = ({
       };
 
       fetchBooks();
-   }, [searchQuery, authorId]);
+   }, [searchQuery, authorId, filter]);
 
    const handleDownload = async (book: Book) => {
       if (book.is_paid && !book.file_url) {
