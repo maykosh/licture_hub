@@ -144,12 +144,11 @@ export const ProfileSettings: React.FC = () => {
             data: { publicUrl },
          } = supabase.storage.from("user").getPublicUrl(filePath);
 
-         // Обновляем URL в базе данных
+         // Обновляем URL в базе данных без updated_at
          const { error: updateError } = await supabase
             .from("users")
             .update({
                avatar_url: publicUrl,
-               updated_at: new Date().toISOString(),
             })
             .eq("id", user.uid);
 
