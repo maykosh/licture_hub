@@ -26,7 +26,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { followService } from "@/entities/author/api/followService";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface Author {
    id: string;
