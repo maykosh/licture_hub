@@ -1,28 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
    List,
    Card,
    Typography,
    Image,
    Space,
-   Modal,
    Button,
-   Tooltip,
    message,
+   Avatar,
+   Divider,
+   Badge,
 } from "antd";
 import {
-   FileTextOutlined,
-   ReadOutlined,
-   ShareAltOutlined,
+   UserOutlined,
    ClockCircleOutlined,
+   ShareAltOutlined,
+   MessageOutlined,
 } from "@ant-design/icons";
 import { supabase } from "@/shared/supabase/supabaseClient";
 import { LikeButton } from "@/shared/ui/LikeButton";
+import { CommentSection } from "@/shared/ui/CommentSection/CommentSection";
 import { useAuthStore } from "@/entities/auth";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ru";
+import { useNavigate } from "react-router-dom";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ru");
@@ -36,8 +39,12 @@ interface Post {
    poster_url: string;
    author_name: string;
    author_id: string;
+   author_avatar?: string;
    created_at: string;
    likes_count: number;
+   comments_count: number;
+   tags?: string[];
+   reading_time?: number;
 }
 
 interface PostsListProps {
@@ -53,26 +60,22 @@ export const PostsList: React.FC<PostsListProps> = ({
 }) => {
    const [posts, setPosts] = useState<Post[]>([]);
    const [loading, setLoading] = useState(true);
-   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+   const [expandedComments, setExpandedComments] = useState<string[]>([]);
    const userId = useAuthStore((state) => state.user?.uid);
-   const { scrollYProgress } = useScroll();
-   const scaleX = useSpring(scrollYProgress, {
-      stiffness: 100,
-      damping: 30,
-      restDelta: 0.001,
-   });
+   const navigate = useNavigate();
 
    useEffect(() => {
       const fetchPosts = async () => {
          try {
             setLoading(true);
             let query = supabase.from("posts").select(`
-            *,
-            authors (
-              author_name
-            ),
-            likes (count)
-          `);
+               *,
+               authors (
+                  author_name,
+                  avatar_url
+               ),
+               likes (count)
+            `);
 
             if (searchQuery) {
                query = query.or(
@@ -86,20 +89,26 @@ export const PostsList: React.FC<PostsListProps> = ({
 
             const { data, error } = await query;
 
-            if (error) throw error;
+            if (error) {
+               console.error("Ошибка при загрузке постов:", error);
+               message.error("Не удалось загрузить посты");
+               return;
+            }
 
-            let processedPosts =
+            const processedPosts =
                data?.map((post) => ({
                   ...post,
                   author_name: post.authors?.author_name,
+                  author_avatar: post.authors?.avatar_url,
                   likes_count: post.likes?.length || 0,
+                  comments_count: 0, // Временно установим в 0, пока не будет создана таблица комментариев
+                  reading_time: Math.ceil(post.content.length / 1000), // Примерное время чтения
                })) || [];
 
             // Применяем фильтрацию
             switch (filter) {
                case "popular":
-                  processedPosts.sort((a, b) => b.likes_count - a.likes_count);
-                  processedPosts = processedPosts.slice(0, 10); // Топ 10 популярных
+                  processedPosts.sort((a, b) => b.likes_count - a.likes_count); // Сортируем по лайкам вместо просмотров
                   break;
                case "new":
                   processedPosts.sort(
@@ -109,13 +118,9 @@ export const PostsList: React.FC<PostsListProps> = ({
                   );
                   break;
                case "mostLiked":
-                  // Фильтруем посты с наибольшим количеством лайков
-                  processedPosts = processedPosts
-                     .filter((post) => post.likes_count > 0)
-                     .sort((a, b) => b.likes_count - a.likes_count);
+                  processedPosts.sort((a, b) => b.likes_count - a.likes_count);
                   break;
                default:
-                  // Для 'all' не применяем дополнительную фильтрацию
                   break;
             }
 
@@ -131,10 +136,6 @@ export const PostsList: React.FC<PostsListProps> = ({
       fetchPosts();
    }, [searchQuery, authorId, filter]);
 
-   const handlePostClick = (post: Post) => {
-      setSelectedPost(post);
-   };
-
    const handleShare = async (post: Post) => {
       try {
          await navigator.clipboard.writeText(
@@ -147,342 +148,249 @@ export const PostsList: React.FC<PostsListProps> = ({
       }
    };
 
-   // Добавляем индикатор прокрутки
-   const ScrollIndicator = () => (
-      <motion.div
-         style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "#1890ff",
-            transformOrigin: "0%",
-            scaleX,
-            zIndex: 1000,
-         }}
-      />
-   );
+   const handleAuthorClick = (authorId: string) => {
+      navigate(`/author/${authorId}`);
+   };
+
+   const handlePostClick = (postId: string) => {
+      navigate(`/post/${postId}`);
+   };
+
+   const toggleComments = (postId: string) => {
+      setExpandedComments((prev) =>
+         prev.includes(postId)
+            ? prev.filter((id) => id !== postId)
+            : [...prev, postId]
+      );
+   };
 
    return (
-      <>
-         <ScrollIndicator />
-         <List
-            grid={{ gutter: 16, xs: 1, sm: 2, md: 2, lg: 3, xl: 3, xxl: 4 }}
-            dataSource={posts}
-            loading={loading}
-            renderItem={(post) => (
-               <List.Item>
-                  <motion.div
-                     whileHover={{ y: -5 }}
-                     transition={{ duration: 0.2 }}
-                     initial={{ opacity: 0, y: 20 }}
-                     animate={{ opacity: 1, y: 0 }}
+      <List
+         itemLayout="vertical"
+         size="large"
+         dataSource={posts}
+         loading={loading}
+         split={false}
+         style={{ maxWidth: 1200, margin: "0 auto" }}
+         renderItem={(post) => (
+            <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.3 }}
+            >
+               <Card
+                  style={{
+                     marginBottom: 24,
+                     borderRadius: 8,
+                     cursor: "pointer",
+                     transition: "all 0.3s ease",
+                  }}
+                  bodyStyle={{ padding: 24 }}
+                  hoverable
+               >
+                  <Space
+                     direction="vertical"
+                     size={16}
+                     style={{ width: "100%" }}
                   >
-                     <Card
-                        hoverable
+                     {/* Хедер поста */}
+                     <Space
                         style={{
-                           height: "100%",
-                           display: "flex",
-                           flexDirection: "column",
-                           overflow: "hidden",
-                           borderRadius: "12px",
-                           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                           transition: "all 0.3s ease",
+                           width: "100%",
+                           justifyContent: "space-between",
+                           marginBottom: 8,
                         }}
-                        bodyStyle={{
-                           flex: 1,
-                           padding: "16px",
-                           display: "flex",
-                           flexDirection: "column",
-                           gap: "16px",
+                     >
+                        <Space size={12}>
+                           <Avatar
+                              src={post.author_avatar}
+                              icon={<UserOutlined />}
+                              size={40}
+                              onClick={(e?: React.MouseEvent<HTMLElement>) => {
+                                 if (e) e.stopPropagation();
+                                 handleAuthorClick(post.author_id);
+                              }}
+                              style={{ cursor: "pointer" }}
+                           />
+                           <Space direction="vertical" size={0}>
+                              <Text
+                                 strong
+                                 style={{ fontSize: 16, cursor: "pointer" }}
+                                 onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAuthorClick(post.author_id);
+                                 }}
+                              >
+                                 {post.author_name}
+                              </Text>
+                              <Text type="secondary" style={{ fontSize: 14 }}>
+                                 <ClockCircleOutlined
+                                    style={{ marginRight: 4 }}
+                                 />
+                                 {dayjs(post.created_at).fromNow()}
+                              </Text>
+                           </Space>
+                        </Space>
+                        <Space size={16}>
+                           <Text type="secondary">
+                              {post.reading_time} мин чтения
+                           </Text>
+                        </Space>
+                     </Space>
+
+                     {/* Теги */}
+                     {/* <Space style={{ marginBottom: 8 }}>
+                        {post.tags?.map((tag) => (
+                           <Tag
+                              key={tag}
+                              color="blue"
+                              style={{
+                                 borderRadius: 16,
+                                 padding: "4px 12px",
+                                 fontSize: 14,
+                              }}
+                           >
+                              {tag}
+                           </Tag>
+                        ))}
+                     </Space> */}
+
+                     {/* Заголовок */}
+                     <Title
+                        level={2}
+                        style={{
+                           fontSize: 24,
+                           marginBottom: 16,
+                           lineHeight: 1.4,
+                           color: "dodgerblue",
+                        }}
+                        onClick={() => handlePostClick(post.id)}
+                     >
+                        {post.title}
+                     </Title>
+
+                     {/* Изображение */}
+                     {post.poster_url && (
+                        <div
+                           style={{
+                              marginBottom: 16,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                           }}
+                        >
+                           <Image
+                              src={post.poster_url}
+                              alt={post.title}
+                              style={{
+                                 width: "100%",
+                                 maxHeight: 400,
+                                 objectFit: "cover",
+                              }}
+                              preview={false}
+                           />
+                        </div>
+                     )}
+
+                     {/* Контент */}
+                     <Paragraph
+                        ellipsis={{ rows: 3 }}
+                        style={{
+                           fontSize: 16,
+                           lineHeight: 1.8,
+                           color: "rgba(0, 0, 0, 0.85)",
+                           marginBottom: 16,
                         }}
                      >
                         <div
-                           style={{
-                              width: "100%",
-                              aspectRatio: "16/9",
-                              position: "relative",
-                              overflow: "hidden",
-                              borderRadius: "8px",
-                              marginBottom: "16px",
-                           }}
-                        >
-                           {post.poster_url ? (
-                              <Image
-                                 alt={post.title}
-                                 src={post.poster_url}
-                                 style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                 }}
-                                 preview={false}
-                              />
-                           ) : (
-                              <div
-                                 style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    background: "#f5f5f5",
-                                 }}
-                              >
-                                 <FileTextOutlined
-                                    style={{
-                                       fontSize: 48,
-                                       color: "#bfbfbf",
-                                    }}
-                                 />
-                              </div>
-                           )}
-                        </div>
-
-                        <div
-                           style={{
-                              flex: 1,
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "12px",
-                           }}
-                        >
-                           <Title
-                              level={4}
-                              ellipsis={{ rows: 2 }}
-                              style={{
-                                 margin: 0,
-                                 minHeight: "3em",
-                                 lineHeight: "1.5",
-                              }}
-                           >
-                              {post.title}
-                           </Title>
-
-                           <Paragraph
-                              ellipsis={{ rows: 3 }}
-                              style={{
-                                 margin: 0,
-                                 color: "#666",
-                                 fontSize: "14px",
-                                 lineHeight: "1.6",
-                              }}
-                           >
-                              <div
-                                 dangerouslySetInnerHTML={{
-                                    __html: post.content,
-                                 }}
-                              />
-                           </Paragraph>
-                        </div>
-
-                        <div
-                           style={{
-                              borderTop: "1px solid #f0f0f0",
-                              paddingTop: "16px",
-                              marginTop: "auto",
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "12px",
-                           }}
-                        >
-                           <div
-                              style={{
-                                 display: "flex",
-                                 justifyContent: "space-between",
-                                 alignItems: "center",
-                              }}
-                           >
-                              <Space size={16}>
-                                 <Text
-                                    type="secondary"
-                                    style={{ fontSize: "14px" }}
-                                 >
-                                    {post.author_name}
-                                 </Text>
-                                 <Text
-                                    type="secondary"
-                                    style={{ fontSize: "14px" }}
-                                 >
-                                    <ClockCircleOutlined
-                                       style={{ marginRight: 4 }}
-                                    />
-                                    {dayjs(post.created_at).fromNow()}
-                                 </Text>
-                              </Space>
-                              <LikeButton
-                                 contentId={post.id}
-                                 contentType="post"
-                                 initialLikesCount={post.likes_count}
-                                 userId={userId}
-                                 size="small"
-                                 onLikeChange={(newCount) => {
-                                    setPosts((prevPosts) =>
-                                       prevPosts.map((p) =>
-                                          p.id === post.id
-                                             ? { ...p, likes_count: newCount }
-                                             : p
-                                       )
-                                    );
-                                 }}
-                              />
-                           </div>
-
-                           <Space.Compact style={{ width: "100%" }}>
-                              <Button
-                                 type="primary"
-                                 icon={<ReadOutlined />}
-                                 onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePostClick(post);
-                                 }}
-                                 style={{ width: "calc(100% - 40px)" }}
-                              >
-                                 Читать
-                              </Button>
-                              <Tooltip title="Поделиться">
-                                 <Button
-                                    icon={<ShareAltOutlined />}
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleShare(post);
-                                    }}
-                                 />
-                              </Tooltip>
-                           </Space.Compact>
-                        </div>
-                     </Card>
-                  </motion.div>
-               </List.Item>
-            )}
-         />
-
-         <Modal
-            title={
-               <div
-                  style={{
-                     borderBottom: "1px solid #f0f0f0",
-                     paddingBottom: "16px",
-                     marginBottom: 0,
-                  }}
-               >
-                  <Title level={3} style={{ margin: "0 0 12px 0" }}>
-                     {selectedPost?.title}
-                  </Title>
-                  <Space size={16}>
-                     <Text type="secondary" style={{ fontSize: "14px" }}>
-                        {selectedPost?.author_name}
-                     </Text>
-                     <Text type="secondary" style={{ fontSize: "14px" }}>
-                        <ClockCircleOutlined style={{ marginRight: 4 }} />
-                        {selectedPost &&
-                           dayjs(selectedPost.created_at).fromNow()}
-                     </Text>
-                  </Space>
-               </div>
-            }
-            open={!!selectedPost}
-            onCancel={() => setSelectedPost(null)}
-            footer={
-               selectedPost && (
-                  <div
-                     style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "12px 0",
-                     }}
-                  >
-                     <Space size={12}>
-                        <LikeButton
-                           contentId={selectedPost.id}
-                           contentType="post"
-                           initialLikesCount={selectedPost.likes_count}
-                           userId={userId}
-                           onLikeChange={(newCount) => {
-                              setSelectedPost((prev) =>
-                                 prev
-                                    ? { ...prev, likes_count: newCount }
-                                    : null
-                              );
-                              setPosts((prevPosts) =>
-                                 prevPosts.map((p) =>
-                                    p.id === selectedPost.id
-                                       ? { ...p, likes_count: newCount }
-                                       : p
-                                 )
-                              );
+                           dangerouslySetInnerHTML={{
+                              __html: post.content,
                            }}
                         />
+                     </Paragraph>
+
+                     <Divider style={{ margin: "16px 0" }} />
+
+                     {/* Футер поста */}
+                     <Space
+                        style={{
+                           width: "100%",
+                           justifyContent: "space-between",
+                           flexWrap:"wrap"
+                        }}
+                     >
+                        <Space size="large">
+                           <LikeButton
+                              contentId={post.id}
+                              contentType="post"
+                              initialLikesCount={post.likes_count}
+                              userId={userId}
+                              size="large"
+                              onLikeChange={(newCount) => {
+                                 setPosts((prevPosts) =>
+                                    prevPosts.map((p) =>
+                                       p.id === post.id
+                                          ? { ...p, likes_count: newCount }
+                                          : p
+                                    )
+                                 );
+                              }}
+                           />
+                           <Badge count={post.comments_count}>
+                              <Button
+                                 type={
+                                    expandedComments.includes(post.id)
+                                       ? "primary"
+                                       : "text"
+                                 }
+                                 icon={<MessageOutlined />}
+                                 size="large"
+                                 onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleComments(post.id);
+                                 }}
+                              >
+                                 Комментарии
+                              </Button>
+                           </Badge>
+                           {/* <Button
+                              type="text"
+                              icon={<BookOutlined />}
+                              size="large"
+                           /> */}
+                        </Space>
                         <Button
+                           type="text"
                            icon={<ShareAltOutlined />}
-                           onClick={() =>
-                              selectedPost && handleShare(selectedPost)
-                           }
+                           onClick={(e: React.MouseEvent<HTMLElement>) => {
+                              e.stopPropagation();
+                              handleShare(post);
+                           }}
+                           size="large"
                         >
                            Поделиться
                         </Button>
                      </Space>
-                     <Button onClick={() => setSelectedPost(null)}>
-                        Закрыть
-                     </Button>
-                  </div>
-               )
-            }
-            style={{
-               top: 20,
-               maxWidth: 500,
-               margin: "0 auto",
-            }}
-            width="90%"
-         >
-            {selectedPost && (
-               <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{ padding: "24px 0" }}
-               >
-                  {selectedPost.poster_url && (
-                     <motion.div
-                        style={{ marginBottom: 32,
-                           margin: "0 auto",
-                         }}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ duration: 0.2 }}
-                     >
-                        <Image
-                           alt={selectedPost.title}
-                           src={selectedPost.poster_url}
-                           style={{
-                              width: "100%",
-                              maxHeight: "500px",
-                              objectFit: "cover",
-                              borderRadius: "12px",
-                              objectPosition: "center",
-                            
-                           }}
-                        />
-                     </motion.div>
-                  )}
-                  <motion.div
-                     className="post-content"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     transition={{ delay: 0.2 }}
-                     dangerouslySetInnerHTML={{
-                        __html: selectedPost.content,
-                     }}
-                     style={{
-                        fontSize: "16px",
-                        lineHeight: "1.8",
-                        color: "#333",
-                        margin: "0 auto",
-                     }}
-                  />
-               </motion.div>
-            )}
-         </Modal>
-      </>
+
+                     {/* Секция комментариев */}
+                     <AnimatePresence>
+                        {expandedComments.includes(post.id) && (
+                           <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                           >
+                              <CommentSection
+                                 postId={post.id}
+                                 authorId={post.author_id}
+                              />
+                           </motion.div>
+                        )}
+                     </AnimatePresence>
+                  </Space>
+               </Card>
+            </motion.div>
+         )}
+      />
    );
 };

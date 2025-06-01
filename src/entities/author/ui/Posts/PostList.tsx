@@ -26,7 +26,7 @@ export const PostList: React.FC<IProps> = ({
    if (posts.length === 0)
       return <Empty description="Нет опубликованных постов" />;
    return (
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
          {posts?.map((post) => (
             <PostCard
                key={post.id}

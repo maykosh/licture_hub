@@ -11,8 +11,10 @@ import {
    FollowersManagement,
    FormAddMedia,
    OtherAuthors,
+   PostView,
 } from "@/pages";
 import { AuthorView } from "@/pages/author-view";
+import { ProfileSettingsPage } from "@/pages/profile-settings/ProfileSettingsPage";
 
 export const App = () => {
    const { user, isAuthChecked, checkSession } = useAuthStore();
@@ -65,7 +67,6 @@ export const App = () => {
             <Route path="create-post" element={<CreatePost />} />
             <Route path="create-other" element={<FormAddMedia />} />
             <Route path="other-authors" element={<OtherAuthors />} />
-            <Route path=":authorId" element={<AuthorView />} />
             <Route
                path="followers-management"
                element={<FollowersManagement />}
@@ -76,8 +77,29 @@ export const App = () => {
          <Route
             path="/reader"
             element={
-               user?.role === "reader" ? <ClientPage /> : <Navigate to="/login" />
+               user?.role === "reader" ? (
+                  <ClientPage />
+               ) : (
+                  <Navigate to="/login" />
+               )
             }
+         >
+            <Route
+               path="settings"
+               element={
+                  user ? <ProfileSettingsPage /> : <Navigate to="/login" />
+               }
+            />
+         </Route>
+
+         {/* Роут для просмотра поста */}
+         <Route
+            path="/post/:postId"
+            element={user ? <PostView /> : <Navigate to="/login" />}
+         />
+         <Route
+            path="/author/:authorId"
+            element={user ? <AuthorView /> : <Navigate to={"/login"} />}
          />
 
          {/* Главная страница — редирект по роли */}

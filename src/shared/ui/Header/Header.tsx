@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Title from "antd/es/typography/Title";
 
 const { Text } = Typography;
 
@@ -74,6 +75,18 @@ export const Header: React.FC<IProps> = ({
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                <ToggleCollapsed />
             </motion.div>
+            <Title
+               level={3}
+               style={{
+                  margin: 0,
+                  background: "linear-gradient(45deg, #1677ff, #69b1ff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: 600,
+               }}
+            >
+               LiteraryHub
+            </Title>
          </div>
 
          <div className="flex items-center gap-4">

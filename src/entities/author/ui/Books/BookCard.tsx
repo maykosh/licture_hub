@@ -204,6 +204,7 @@ export const BookCard: React.FC<BookCardProps> = ({
                            top: 8,
                            right: 8,
                            zIndex: 1,
+                           padding: 10,
                         }}
                      >
                         <Dropdown menu={{ items }} placement="bottomRight">

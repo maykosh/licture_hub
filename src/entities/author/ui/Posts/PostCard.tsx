@@ -8,6 +8,7 @@ import {
    Dropdown,
    Modal,
    Skeleton,
+   Divider,
 } from "antd";
 import {
    EditOutlined,
@@ -16,10 +17,12 @@ import {
    MoreOutlined,
    ReadOutlined,
    FileImageOutlined,
+   MessageOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { IPosts } from "../../model/type";
 import { LikeButton } from "@/shared/ui/LikeButton";
+import { CommentSection } from "@/shared/ui/CommentSection/CommentSection";
 
 const { Title, Text } = Typography;
 
@@ -235,6 +238,15 @@ export const PostCard: React.FC<PostCardProps> = ({
                               Читать
                            </Button>
                         </Space>
+
+                        <Button
+                           type="text"
+                           icon={<MessageOutlined />}
+                           onClick={() => setIsModalVisible(true)}
+                           style={{ fontSize: "0.9rem", padding: 0 }}
+                        >
+                           Комментарии
+                        </Button>
                         <Text type="secondary" style={{ fontSize: "0.9rem" }}>
                            <LikeButton
                               contentId={posts.id}
@@ -327,6 +339,14 @@ export const PostCard: React.FC<PostCardProps> = ({
                      userId={userId}
                      onLikeChange={handleLikeChange}
                      size="large"
+                  />
+               </div>
+               <Divider />
+               <div style={{ marginTop: 24 }}>
+                  <Title level={4}>Комментарии</Title>
+                  <CommentSection
+                     postId={posts.id}
+                     authorId={posts.author_id}
                   />
                </div>
             </div>

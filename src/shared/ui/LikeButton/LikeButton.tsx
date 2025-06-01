@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Button, message, Tooltip } from "antd";
+import { Button, message, Tooltip, Drawer, List, Avatar, Space } from "antd";
 import { supabase } from "@/shared/supabase/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 import styled from "styled-components";
-import { LikeOutlined } from "@ant-design/icons";
+import { LikeOutlined, UserOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
 interface LikeButtonProps {
    contentId: string;
@@ -21,6 +22,21 @@ interface LikeData {
    book_id?: string;
    media_id?: string;
    created_at?: string;
+}
+
+interface LikerInfo {
+   id: string;
+   full_name: string;
+   avatar_url?: string;
+}
+
+interface SupabaseLike {
+   user_id: string;
+   users: {
+      id: string;
+      full_name: string;
+      avatar_url?: string;
+   };
 }
 
 interface StyledButtonProps {
@@ -77,14 +93,11 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 }) => {
    const [isLiked, setIsLiked] = useState(false);
    const [likesCount, setLikesCount] = useState(initialLikesCount);
-   // const [loading, setLoading] = useState(false);
+   const [drawerVisible, setDrawerVisible] = useState(false);
+   const [likers, setLikers] = useState<LikerInfo[]>([]);
+   const [loading, setLoading] = useState(false);
+   const navigate = useNavigate();
 
-   // Обновляем локальное состояние при изменении initialLikesCount
-   useEffect(() => {
-      setLikesCount(initialLikesCount);
-   }, [initialLikesCount]);
-
-   // Проверяем статус лайка при монтировании и изменении userId или contentId
    useEffect(() => {
       const checkIfLiked = async () => {
          if (!userId) {
@@ -93,7 +106,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
          }
 
          try {
-            // setLoading(true);
+            setLoading(true);
             const idField = `${contentType}_id`;
 
             // Получаем актуальное количество лайков
@@ -117,7 +130,6 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
             setIsLiked(!!data);
             setLikesCount(totalLikes || 0);
 
-            // Синхронизируем с родительским компонентом
             if (onLikeChange && totalLikes !== initialLikesCount) {
                onLikeChange(totalLikes || 0);
             }
@@ -125,25 +137,63 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
             console.error("Ошибка при проверке лайка:", error);
             message.error("Не удалось загрузить информацию о лайках");
          } finally {
-            // setLoading(false);
+            setLoading(false);
          }
       };
 
       checkIfLiked();
    }, [userId, contentId, contentType, initialLikesCount, onLikeChange]);
-  
+
+   const fetchLikers = async (): Promise<void> => {
+      try {
+         setLoading(true);
+         const idField = `${contentType}_id`;
+
+         const { data: likesData, error: likesError } = await supabase
+            .from("likes")
+            .select(
+               `
+               user_id,
+               users!inner (
+                  id,
+                  full_name,
+                  avatar_url
+               )
+            `
+            )
+            .eq(idField, contentId);
+
+         if (likesError) throw likesError;
+
+         if (likesData) {
+            const processedLikers: LikerInfo[] = (
+               likesData as unknown as SupabaseLike[]
+            ).map((like) => ({
+               id: like.users.id,
+               full_name: like.users.full_name,
+               avatar_url: like.users.avatar_url,
+            }));
+            setLikers(processedLikers);
+         }
+      } catch (error) {
+         console.error("Ошибка при загрузке списка лайков:", error);
+         message.error("Не удалось загрузить список лайков");
+      } finally {
+         setLoading(false);
+      }
+   };
+
    const handleLike = async () => {
       if (!userId) {
          message.warning("Необходимо авторизоваться для оценки контента");
          return;
       }
 
-      // setLoading(true);
       try {
+         setLoading(true);
          const idField = `${contentType}_id`;
 
          if (isLiked) {
-            // Удаляем лайк
             const { error } = await supabase
                .from("likes")
                .delete()
@@ -158,7 +208,6 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
             if (onLikeChange) onLikeChange(newCount);
             message.success("Лайк убран");
          } else {
-            // Добавляем лайк
             const likeData: LikeData = {
                user_id: userId,
                [idField]: contentId,
@@ -177,68 +226,98 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       } catch (error) {
          console.error("Ошибка при обновлении лайка:", error);
          message.error("Произошла ошибка при обновлении лайка");
-
-         // В случае ошибки перезагружаем актуальное состояние
-         const checkLikes = async () => {
-            try {
-               const idField = `${contentType}_id`;
-               const { count } = await supabase
-                  .from("likes")
-                  .select("*", { count: "exact" })
-                  .eq(idField, contentId);
-
-               setLikesCount(count || 0);
-               if (onLikeChange) onLikeChange(count || 0);
-            } catch (e) {
-               console.error("Ошибка при обновлении счетчика:", e);
-            }
-         };
-
-         checkLikes();
       } finally {
-         // setLoading(false);
+         setLoading(false);
       }
    };
 
+   const handleContextMenu = async (e: React.MouseEvent) => {
+      e.preventDefault(); // Предотвращаем стандартное контекстное меню
+      if (likesCount > 0) {
+         await fetchLikers();
+         setDrawerVisible(true);
+      }
+   };
+
+   const handleLikerClick = (likerId: string) => {
+      navigate(`/author/${likerId}`);
+      setDrawerVisible(false);
+   };
+
    return (
-      <Tooltip
-         title={
-            userId
-               ? isLiked
-                  ? "Убрать лайк"
-                  : "Поставить лайк"
-               : "Войдите, чтобы оценить"
-         }
-      >
-         <StyledButton
-            onClick={handleLike}
-            // loading={loading}
-            size={size}
-            $isLiked={isLiked}
+      <>
+         <Space>
+            <Tooltip
+               title={
+                  userId
+                     ? isLiked
+                        ? "Убрать лайк"
+                        : "Поставить лайк"
+                     : "Войдите, чтобы оценить"
+               }
+            >
+               <StyledButton
+                  onClick={handleLike}
+                  onContextMenu={handleContextMenu}
+         
+                  size={size}
+                  $isLiked={isLiked}
+               >
+                  <AnimatePresence mode="wait">
+                     <motion.div
+                        key={isLiked ? "liked" : "unliked"}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                     >
+                        <LikeOutlined />
+                     </motion.div>
+                  </AnimatePresence>
+                  {showCount && (
+                     <motion.span
+                        className="count"
+                        key={likesCount}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                     >
+                        {likesCount}
+                     </motion.span>
+                  )}
+               </StyledButton>
+            </Tooltip>
+         </Space>
+
+         <Drawer
+            title="Понравилось"
+            placement="right"
+            onClose={() => setDrawerVisible(false)}
+            open={drawerVisible}
+            width={320}
          >
-            <AnimatePresence mode="wait">
-               <motion.div
-                  key={isLiked ? "liked" : "unliked"}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-               >
-                  {isLiked ?<LikeOutlined /> : <LikeOutlined />}
-               </motion.div>
-            </AnimatePresence>
-            {showCount && (
-               <motion.span
-                  className="count"
-                  key={likesCount}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-               >
-                  {likesCount}
-               </motion.span>
-            )}
-         </StyledButton>
-      </Tooltip>
+            <List
+               itemLayout="horizontal"
+               dataSource={likers}
+               loading={loading}
+               renderItem={(liker) => (
+                  <List.Item
+                     style={{ cursor: "pointer" }}
+                     onClick={() => handleLikerClick(liker.id)}
+                  >
+                     <List.Item.Meta
+                        avatar={
+                           <Avatar
+                              src={liker.avatar_url}
+                              icon={<UserOutlined />}
+                           />
+                        }
+                        title={liker.full_name}
+                     />
+                  </List.Item>
+               )}
+            />
+         </Drawer>
+      </>
    );
 };
